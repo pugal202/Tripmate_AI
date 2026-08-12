@@ -28,6 +28,36 @@ export interface ProviderStatus {
   missing?: string[];
 }
 
+export type JourneyMode = "flight" | "train" | "bus" | "taxi" | "rental_car" | "metro" | "tram" | "walking" | "bike" | "other";
+
+export interface JourneySegment {
+  type: JourneyMode;
+  provider?: string;
+  serviceNumber?: string;
+  origin: string;
+  destination: string;
+  departure?: string;
+  arrival?: string;
+  status: "scheduled" | "boarding" | "on_time" | "delayed" | "cancelled" | "completed" | "unavailable";
+  currentLocation?: string;
+  nextStop?: string;
+  eta?: string;
+  delay?: number;
+  platform?: string;
+  gate?: string;
+  terminal?: string;
+  bookingReference?: string;
+  price?: number;
+  currency?: string;
+}
+
+export interface JourneySearchResponse {
+  origin: string;
+  destination: string;
+  segments: JourneySegment[];
+  capabilities: Array<{ type: JourneyMode; provider: string; configured: boolean; reason?: string }>;
+}
+
 export interface FlightOffer {
   id: string;
   source: string;
