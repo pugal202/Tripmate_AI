@@ -33,3 +33,20 @@ export const handleFlightSearch: RequestHandler = async (req, res) => {
     return res.status(502).json({ error: "Unable to retrieve live flight availability right now. Please try again.", code: "FLIGHT_SEARCH_FAILED" });
   }
 };
+
+export const handleFlightRevalidate: RequestHandler = async (req, res) => {
+  const offer = req.body?.offer;
+  if (!offer || typeof offer !== "object" || typeof offer.id !== "string") return res.status(400).json({ error: "A provider flight offer is required.", code: "INVALID_OFFER" });
+  try {
+    const token = await getAmadeusToken();
+    const base = process.env.AMADEUS_BASE_URL ?? "https://test.api.amadeus.com";
+    const response = await fetch(`${base}/v1/shopping/flight-offers/pricing`, { method: "POST", headers: { Authorization: `Bearer ${token}`, "content-type": "application/vnd.amadeus+json" }, body: JSON.stringify({ data: { type: "flight-offer-pricing", flightOffers: [offer] } }) });
+    const data = await response.json() as any;
+    if (!response.ok) return res.status(502).json({ error: data?.errors?.[0]?.detail ?? "The provider could not revalidate this offer.", code: "OFFER_REVALIDATION_FAILED" });
+    return res.json({ revalidatedOffer: data.data?.flightOffers?.[0] ?? null, bookingRequired: true, providerConfirmed: false, message: "Offer revalidated. No booking order was submitted." });
+  } catch (error) {
+    const code = error instanceof Error ? error.message : "OFFER_REVALIDATION_FAILED";
+    if (code === "AMADEUS_NOT_CONFIGURED") return res.status(503).json({ error: "Live flight revalidation is not configured.", code });
+    return res.status(502).json({ error: "Unable to revalidate the provider offer.", code: "OFFER_REVALIDATION_FAILED" });
+  }
+};
