@@ -29,7 +29,7 @@ export const handleFlightSearch: RequestHandler = async (req, res) => {
     return res.json({ offers: data.data ?? [], provider: "amadeus", testEnvironment: base.includes("test.") } satisfies FlightSearchResponse);
   } catch (error) {
     const code = error instanceof Error ? error.message : "FLIGHT_SEARCH_FAILED";
-    if (code === "AMADEUS_NOT_CONFIGURED") return res.status(503).json({ error: "Live flight search is not configured. Add AMADEUS_CLIENT_ID and AMADEUS_CLIENT_SECRET on the server.", code });
+    if (code === "AMADEUS_NOT_CONFIGURED") return res.status(503).json({ error: "Flight provider temporarily unavailable.", code });
     return res.status(502).json({ error: "Unable to retrieve live flight availability right now. Please try again.", code: "FLIGHT_SEARCH_FAILED" });
   }
 };
