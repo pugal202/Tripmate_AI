@@ -9,6 +9,7 @@ import { handleProviderStatus } from "./routes/providers";
 import { handleCopilot } from "./routes/copilot";
 import { handleDestinationSearch } from "./routes/destinations";
 import { handleJourneySearch } from "./routes/journeys";
+import { handleChat } from "./routes/chat";
 
 export function createServer() {
   const app = express();
@@ -31,6 +32,7 @@ export function createServer() {
   app.get("/api/places/search", handlePlacesSearch);
   app.get("/api/providers", handleProviderStatus);
   app.post("/api/copilot", handleCopilot);
+  app.post("/api/chat", handleChat);
   app.get("/api/destinations/search", handleDestinationSearch);
   app.get("/api/journeys/search", handleJourneySearch);
 

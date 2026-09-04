@@ -1,0 +1,74 @@
+import { RequestHandler } from "express";
+
+const systemPrompt = `You are TripMate AI, an intelligent enterprise travel copilot. Use the supplied traveler profile, journey, flight, hotel, meeting, transport, dining and policy context. Prioritize safety and journey feasibility, important commitments, traveler preferences, comfort, then cost. Be concise, useful and action-oriented. Explain why recommendations fit the traveler. Never claim an action was booked, cancelled, rebooked or purchased unless a real provider confirmation is present. Treat simulated and demo records as demo data. Do not invent unavailable information; state uncertainty clearly. Understand follow-up questions from the conversation history.`;
+
+export const handleChat: RequestHandler = async (req, res) => {
+  const message = typeof req.body?.message === "string" ? req.body.message.trim() : "";
+  const context = req.body?.context && typeof req.body.context === "object" ? req.body.context : {};
+  const history = Array.isArray(req.body?.history) ? req.body.history.filter((item: any) => item && (item.role === "user" || item.role === "assistant") && typeof item.content === "string").slice(-10) : [];
+
+  if (!message) return res.status(400).json({ error: "Please enter a question for TripMate AI.", code: "INVALID_MESSAGE" });
+
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) return res.json({ ...ruleBasedAnswer(message, context), availability: "AI Copilot is currently unavailable. Demo intelligence is still available through Journey Intelligence." });
+
+  try {
+    const input = [
+      { role: "system", content: systemPrompt },
+      ...history,
+      { role: "user", content: `TripMate context:\n${JSON.stringify(context)}\n\nQuestion:\n${message}` },
+    ];
+    const response = await fetch("https://api.openai.com/v1/responses", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "content-type": "application/json" },
+      body: JSON.stringify({ model: process.env.OPENAI_MODEL ?? "gpt-4.1-mini", input }),
+    });
+    const data = await response.json() as { output_text?: string; error?: { message?: string } };
+    if (!response.ok) return res.status(502).json({ error: "AI Copilot is temporarily unavailable. Demo intelligence is still available through Journey Intelligence.", code: "AI_PROVIDER_ERROR" });
+    const answer = data.output_text?.trim();
+    if (!answer) return res.status(502).json({ error: "AI Copilot returned an empty response. Please try again.", code: "AI_EMPTY_RESPONSE" });
+    return res.json({ answer, provider: "openai", action: actionFor(message, context) });
+  } catch {
+    return res.status(502).json({ error: "AI Copilot is temporarily unavailable. Demo intelligence is still available through Journey Intelligence.", code: "AI_NETWORK_ERROR" });
+  }
+};
+
+function ruleBasedAnswer(message: string, context: Record<string, any>) {
+  const query = message.toLowerCase();
+  const disrupted = Boolean(context.journeyStatus?.disrupted);
+  const flights = context.availableDemoData?.flights ?? [
+    { flightNumber: "DA482", price: "₹42,500", stops: "Non-stop", arrival: "07:40 AM" },
+    { flightNumber: "DA518", price: "₹38,200", stops: "1 stop", arrival: "09:20 AM" },
+    { flightNumber: "DA620", price: "₹31,900", stops: "1 stop", arrival: "12:10 PM" },
+  ];
+  let answer = "I can explain the current TripMate journey, compare the demo recovery options, or help you review the meeting, hotel and travel policy context.";
+
+  if (query.includes("delay") || query.includes("risk") || query.includes("what should i do")) {
+    answer = disrupted
+      ? "Your AI 482 flight is delayed by 2h 15m. This reduces your Frankfurt connection buffer to 55 minutes and puts your 9:00 AM London meeting at risk. I found 3 demo alternatives; based on your preference for protecting business commitments, I recommend Option A. Would you like me to compare the alternatives?"
+      : "Your current journey is being monitored. The Frankfurt connection is the key dependency before the 9:00 AM London business meeting. Open Journey Intelligence to run the disruption simulation and see the full impact analysis.";
+  } else if (query.includes("cheaper") || query.includes("option b")) {
+    answer = "Option B saves ₹6,100 versus the early alternative, but arrival moves to 09:20 AM. That puts your 9:00 AM meeting at risk. Your traveler profile prioritizes business commitments over minimizing cost, so I recommend the earlier option.";
+  } else if (query.includes("alternative") || query.includes("another flight") || query.includes("best flight")) {
+    answer = `I found ${flights.length} demo alternatives ranked for your business commitment: ${flights.map((flight: any, index: number) => `${index + 1}. ${flight.flightNumber} — ${flight.price} — ${flight.stops} — ${flight.arrival}`).join("; ")} . I recommend ${flights[0].flightNumber} because it protects your 9:00 AM meeting.`;
+  } else if (query.includes("hotel")) {
+    answer = "The demo hotel closest to the meeting is Hilton London City Centre, rated 4.8 and 0.8 km from the London business center. Availability and booking confirmation still require a configured hotel provider.";
+  } else if (query.includes("meeting") || query.includes("who am i meeting")) {
+    answer = "You are meeting Sarah Mitchell, VP of Enterprise Partnerships at Enterprise Client, at 9:00 AM in the London Business Center. The topic is Travel Intelligence Platform Integration.";
+  } else if (query.includes("summarize") || query.includes("trip")) {
+    answer = `This is a ${context.traveler?.purpose ?? "business"} journey for ${context.traveler?.name ?? "Pugal"}: Bengaluru → Frankfurt → London, with a 9:00 AM London meeting and a confirmed hotel. ${disrupted ? "The current demo disruption puts the Frankfurt connection and meeting at risk." : "The journey is currently being monitored with a potential connection risk."}`;
+  } else if (query.includes("recommend")) {
+    answer = "I recommend Option A, the early alternative. It scores 94/100, protects the meeting, keeps the hotel unchanged and matches your TIME > COMFORT > PRICE preference. This is a demo recommendation; provider revalidation and approval are still required.";
+  }
+
+  return { answer, provider: "rule-based", action: actionFor(message, context) };
+}
+
+function actionFor(message: string, context: Record<string, any>) {
+  const query = message.toLowerCase();
+  if (query.includes("alternative") || query.includes("cheaper") || query.includes("option")) return { type: "compare-alternatives", label: "Compare Alternatives", requiresConfirmation: false };
+  if (query.includes("hotel")) return { type: "view-hotels", label: "View Hotels", requiresConfirmation: false };
+  if (query.includes("meeting") || query.includes("miss")) return { type: "view-journey-impact", label: "View Journey Impact", requiresConfirmation: false };
+  if (context.journeyStatus?.disrupted && (query.includes("delay") || query.includes("risk"))) return { type: "view-journey-impact", label: "View Journey Impact", requiresConfirmation: false };
+  return undefined;
+}
