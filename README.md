@@ -6,7 +6,7 @@ TripMate AI is an enterprise business-travel workspace that connects the complet
 
 ## What is real today
 
-- **Live weather:** Frankfurt weather is retrieved from Open-Meteo through the server (`/api/weather`). No key is required. The UI shows loading/error states and the source.
+- **Live weather:** Delhi weather is retrieved from Open-Meteo through the server (`/api/weather`). No key is required. The UI shows loading/error states and the source.
 - **Live flight search boundary:** `/api/flights/search` uses the official Amadeus OAuth and Flight Offers APIs when configured. It defaults to the Amadeus test environment and never returns invented offers.
 - **Live place discovery boundary:** `/api/places/search` uses Google Places API (New) when a restricted server key is configured. Restaurant reservation is not claimed because Places does not confirm reservations.
 - **Contextual copilot boundary:** `/api/copilot` uses OpenAI when configured and otherwise returns an explicit rule-based response. It is instructed not to claim bookings or availability that are not in the supplied context.
@@ -22,7 +22,7 @@ The current booking UI is intentionally provider-truthful: a selection can be ad
 - `server/routes/weather.ts` — geocoding + live Open-Meteo forecast.
 - `server/routes/flights.ts` — Amadeus token cache and live flight-offer search.
 - `server/routes/places.ts` — Google Places text search.
-- `server/routes/copilot.ts` — OpenAI Responses API with a truthful fallback.
+- `server/routes/chat.ts` — OpenAI Responses API with contextual India-journey fallback.
 - `server/routes/providers.ts` — configuration/capability status.
 
 ## Local setup

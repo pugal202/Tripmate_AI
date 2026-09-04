@@ -30,17 +30,14 @@ export type FlightSearchResult = {
 
 const airportNames: Record<string, string> = {
   BLR: "Bengaluru",
-  MAA: "Chennai",
-  DEL: "Delhi",
   BOM: "Mumbai",
+  DEL: "Delhi",
   HYD: "Hyderabad",
-  LHR: "London",
-  FRA: "Frankfurt",
-  SIN: "Singapore",
+  MAA: "Chennai",
 };
 
 const formatTime = (value: string) =>
-  new Date(value).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  new Date(value).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Asia/Kolkata" });
 
 const formatDuration = (value: string) =>
   value.replace("PT", "").replace("H", "h ").replace("M", "m").trim();
@@ -51,11 +48,19 @@ const demoFlights = (form: FlightSearchForm): FlightSearchResult[] => {
   const originName = airportNames[origin] ?? origin;
   const destinationName = airportNames[destination] ?? destination;
   const date = form.departureDate;
-  const options = [
-    { airline: "IndiGo", flightNumber: "6E 6114", departure: "06:30", arrival: "07:35", duration: "1h 05m", stops: "Non-stop", price: 5840, score: 96, reason: "Matches your preferred morning departure and lowest acceptable travel time." },
-    { airline: "Air India", flightNumber: "AI 571", departure: "08:10", arrival: "09:20", duration: "1h 10m", stops: "Non-stop", price: 6420, score: 92, reason: "Strong meeting fit with a preferred airline and a nonstop itinerary." },
-    { airline: "Vistara", flightNumber: "UK 839", departure: "11:45", arrival: "12:55", duration: "1h 10m", stops: "Non-stop", price: 7190, score: 84, reason: "Comfortable timing with a flexible fare and nonstop travel." },
-  ];
+  const routeOptions: Record<string, Array<{ airline: string; flightNumber: string; departure: string; arrival: string; duration: string; stops: string; price: number; score: number; reason: string }>> = {
+    "BLR-BOM": [{ airline: "Air India", flightNumber: "AI 482", departure: "06:30", arrival: "08:20", duration: "1h 50m", stops: "Non-stop", price: 8250, score: 96, reason: "Protects the Mumbai connection with the earliest nonstop departure." }, { airline: "IndiGo", flightNumber: "6E 531", departure: "08:10", arrival: "10:00", duration: "1h 50m", stops: "Non-stop", price: 6100, score: 89, reason: "Lower fare with a reliable nonstop route between Bengaluru and Mumbai." }, { airline: "Vistara", flightNumber: "UK 945", departure: "11:45", arrival: "13:35", duration: "1h 50m", stops: "Non-stop", price: 9400, score: 84, reason: "Comfortable timing with a flexible fare." }],
+    "BLR-DEL": [{ airline: "Air India", flightNumber: "AI 204", departure: "06:00", arrival: "08:45", duration: "2h 45m", stops: "Non-stop", price: 9800, score: 95, reason: "Earliest nonstop arrival for a Delhi business meeting." }, { airline: "IndiGo", flightNumber: "6E 204", departure: "08:30", arrival: "11:15", duration: "2h 45m", stops: "Non-stop", price: 7200, score: 86, reason: "Balanced price and nonstop travel." }, { airline: "Vistara", flightNumber: "UK 811", departure: "14:20", arrival: "17:05", duration: "2h 45m", stops: "Non-stop", price: 8800, score: 78, reason: "Afternoon alternative with a flexible fare." }],
+    "BLR-HYD": [{ airline: "IndiGo", flightNumber: "6E 6318", departure: "06:40", arrival: "07:50", duration: "1h 10m", stops: "Non-stop", price: 4800, score: 93, reason: "Fastest nonstop option." }],
+    "BLR-MAA": [{ airline: "IndiGo", flightNumber: "6E 6114", departure: "06:30", arrival: "07:35", duration: "1h 05m", stops: "Non-stop", price: 5840, score: 96, reason: "Matches your preferred morning departure and lowest acceptable travel time." }],
+    "BOM-DEL": [{ airline: "Air India", flightNumber: "AI 618", departure: "20:00", arrival: "22:10", duration: "2h 10m", stops: "Non-stop", price: 8200, score: 96, reason: "Protects the Delhi meeting with a dependable nonstop connection." }, { airline: "IndiGo", flightNumber: "6E 518", departure: "21:10", arrival: "23:20", duration: "2h 10m", stops: "Non-stop", price: 6100, score: 82, reason: "Lower cost while keeping a nonstop route." }],
+    "BOM-BLR": [{ airline: "Vistara", flightNumber: "UK 866", departure: "07:00", arrival: "08:40", duration: "1h 40m", stops: "Non-stop", price: 7600, score: 91, reason: "Early nonstop return option." }],
+    "DEL-BLR": [{ airline: "Air India", flightNumber: "AI 803", departure: "07:15", arrival: "10:00", duration: "2h 45m", stops: "Non-stop", price: 9200, score: 92, reason: "Strong morning schedule for business travel." }],
+    "DEL-BOM": [{ airline: "IndiGo", flightNumber: "6E 531", departure: "06:30", arrival: "08:35", duration: "2h 05m", stops: "Non-stop", price: 6800, score: 94, reason: "Fastest value option between Delhi and Mumbai." }],
+    "HYD-DEL": [{ airline: "Air India", flightNumber: "AI 542", departure: "06:20", arrival: "08:40", duration: "2h 20m", stops: "Non-stop", price: 7900, score: 92, reason: "Morning arrival for a Delhi business commitment." }],
+    "MAA-DEL": [{ airline: "IndiGo", flightNumber: "6E 6341", departure: "06:10", arrival: "08:50", duration: "2h 40m", stops: "Non-stop", price: 7100, score: 90, reason: "Nonstop morning arrival." }],
+  };
+  const options = routeOptions[`${origin}-${destination}`] ?? routeOptions["BLR-BOM"];
 
   return options.map((option, index) => ({
     id: `demo-${origin}-${destination}-${index + 1}`,

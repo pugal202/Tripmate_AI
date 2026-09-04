@@ -37,26 +37,26 @@ function ruleBasedAnswer(message: string, context: Record<string, any>) {
   const query = message.toLowerCase();
   const disrupted = Boolean(context.journeyStatus?.disrupted);
   const flights = context.availableDemoData?.flights ?? [
-    { flightNumber: "DA482", price: "₹42,500", stops: "Non-stop", arrival: "07:40 AM" },
-    { flightNumber: "DA518", price: "₹38,200", stops: "1 stop", arrival: "09:20 AM" },
-    { flightNumber: "DA620", price: "₹31,900", stops: "1 stop", arrival: "12:10 PM" },
+    { flightNumber: "DA482", price: "₹42,500", stops: "Non-stop", arrival: "07:40" },
+    { flightNumber: "DA518", price: "₹38,200", stops: "1 stop", arrival: "09:20" },
+    { flightNumber: "DA620", price: "₹31,900", stops: "1 stop", arrival: "12:10" },
   ];
   let answer = "I can explain the current TripMate journey, compare the demo recovery options, or help you review the meeting, hotel and travel policy context.";
 
   if (query.includes("delay") || query.includes("risk") || query.includes("what should i do")) {
     answer = disrupted
-      ? "Your AI 482 flight is delayed by 2h 15m. This reduces your Frankfurt connection buffer to 55 minutes and puts your 9:00 AM London meeting at risk. I found 3 demo alternatives; based on your preference for protecting business commitments, I recommend Option A. Would you like me to compare the alternatives?"
-      : "Your current journey is being monitored. The Frankfurt connection is the key dependency before the 9:00 AM London business meeting. Open Journey Intelligence to run the disruption simulation and see the full impact analysis.";
+      ? "Your AI 482 flight is delayed by 2h 15m. This reduces your Mumbai connection buffer to 55 minutes and puts your 09:00 Delhi meeting at risk. I found 3 demo alternatives; based on your preference for protecting business commitments, I recommend Option A. Would you like me to compare the alternatives?"
+      : "Your current journey is being monitored. The Mumbai connection is the key dependency before the 09:00 Delhi business meeting. Open Journey Intelligence to run the disruption simulation and see the full impact analysis.";
   } else if (query.includes("cheaper") || query.includes("option b")) {
-    answer = "Option B saves ₹6,100 versus the early alternative, but arrival moves to 09:20 AM. That puts your 9:00 AM meeting at risk. Your traveler profile prioritizes business commitments over minimizing cost, so I recommend the earlier option.";
+    answer = "Option B saves ₹6,100 versus the early alternative, but arrival moves to 09:20. That puts your 09:00 meeting in Delhi at risk. Your traveler profile prioritizes business commitments over minimizing cost, so I recommend the earlier option.";
   } else if (query.includes("alternative") || query.includes("another flight") || query.includes("best flight")) {
-    answer = `I found ${flights.length} demo alternatives ranked for your business commitment: ${flights.map((flight: any, index: number) => `${index + 1}. ${flight.flightNumber} — ${flight.price} — ${flight.stops} — ${flight.arrival}`).join("; ")} . I recommend ${flights[0].flightNumber} because it protects your 9:00 AM meeting.`;
+    answer = `I found ${flights.length} demo alternatives ranked for your business commitment: ${flights.map((flight: any, index: number) => `${index + 1}. ${flight.flightNumber} — ${flight.price} — ${flight.stops} — ${flight.arrival}`).join("; ")} . I recommend ${flights[0].flightNumber} because it protects your 09:00 meeting.`;
   } else if (query.includes("hotel")) {
-    answer = "The demo hotel closest to the meeting is Hilton London City Centre, rated 4.8 and 0.8 km from the London business center. Availability and booking confirmation still require a configured hotel provider.";
+    answer = "The demo hotel closest to the meeting is Andaz Delhi Aerocity, rated 4.8 and 0.8 km from the Aerocity business center. Availability and booking confirmation still require a configured hotel provider.";
   } else if (query.includes("meeting") || query.includes("who am i meeting")) {
-    answer = "You are meeting Sarah Mitchell, VP of Enterprise Partnerships at Enterprise Client, at 9:00 AM in the London Business Center. The topic is Travel Intelligence Platform Integration.";
+    answer = "You are meeting Sarah Mitchell, VP of Enterprise Partnerships at Enterprise Client, at 09:00 in the Aerocity, New Delhi Business Center. The topic is Travel Intelligence Platform Integration.";
   } else if (query.includes("summarize") || query.includes("trip")) {
-    answer = `This is a ${context.traveler?.purpose ?? "business"} journey for ${context.traveler?.name ?? "Pugal"}: Bengaluru → Frankfurt → London, with a 9:00 AM London meeting and a confirmed hotel. ${disrupted ? "The current demo disruption puts the Frankfurt connection and meeting at risk." : "The journey is currently being monitored with a potential connection risk."}`;
+    answer = `This is a ${context.traveler?.purpose ?? "business"} journey for ${context.traveler?.name ?? "Pugal"}: Bengaluru → Mumbai → Delhi, with a 09:00 Delhi meeting and a confirmed hotel. ${disrupted ? "The current demo disruption puts the Mumbai connection and Delhi meeting at risk." : "The journey is currently being monitored with a potential connection risk."}`;
   } else if (query.includes("recommend")) {
     answer = "I recommend Option A, the early alternative. It scores 94/100, protects the meeting, keeps the hotel unchanged and matches your TIME > COMFORT > PRICE preference. This is a demo recommendation; provider revalidation and approval are still required.";
   }
