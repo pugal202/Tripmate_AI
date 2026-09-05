@@ -10,7 +10,7 @@ export const handleChat: RequestHandler = async (req, res) => {
   if (!message) return res.status(400).json({ error: "Please enter a question for TripMate AI.", code: "INVALID_MESSAGE" });
 
   const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) return res.json({ ...ruleBasedAnswer(message, context), availability: "AI Copilot is currently unavailable. Demo intelligence is still available through Journey Intelligence." });
+  if (!apiKey) return res.json({ ...ruleBasedAnswer(message, context), availability: "Demo Intelligence" });
 
   try {
     const input = [
@@ -24,12 +24,12 @@ export const handleChat: RequestHandler = async (req, res) => {
       body: JSON.stringify({ model: process.env.OPENAI_MODEL ?? "gpt-4.1-mini", input }),
     });
     const data = await response.json() as { output_text?: string; error?: { message?: string } };
-    if (!response.ok) return res.status(502).json({ error: "AI Copilot is temporarily unavailable. Demo intelligence is still available through Journey Intelligence.", code: "AI_PROVIDER_ERROR" });
+    if (!response.ok) return res.json({ ...ruleBasedAnswer(message, context), availability: "Demo Intelligence" });
     const answer = data.output_text?.trim();
-    if (!answer) return res.status(502).json({ error: "AI Copilot returned an empty response. Please try again.", code: "AI_EMPTY_RESPONSE" });
+    if (!answer) return res.json({ ...ruleBasedAnswer(message, context), availability: "Demo Intelligence" });
     return res.json({ answer, provider: "openai", action: actionFor(message, context) });
   } catch {
-    return res.status(502).json({ error: "AI Copilot is temporarily unavailable. Demo intelligence is still available through Journey Intelligence.", code: "AI_NETWORK_ERROR" });
+    return res.json({ ...ruleBasedAnswer(message, context), availability: "Demo Intelligence" });
   }
 };
 

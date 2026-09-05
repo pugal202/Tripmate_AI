@@ -4,6 +4,7 @@ import type { JourneySegment } from "@shared/api";
 import { searchFlights, type FlightSearchForm, type FlightSearchResult } from "@/lib/flights";
 import { calculateJourneyImpact, recoveryOptions as journeyRecoveryOptions } from "@/lib/journey-intelligence";
 import { useTripContext, type AutoRebookPreferences, type TripContext as SharedTripContext, demoHotels as sharedHotels, demoRestaurants as sharedRestaurants, demoExpenses as sharedExpenses } from "@/lib/trip-context";
+import { indianAirports } from "@/data/airports";
 import { Activity, AlertTriangle, ArrowRight, Bell, BrainCircuit, CalendarDays, Car, Check, CheckCircle2, ChevronDown, CircleHelp, Clock3, CloudSun, CreditCard, FileText, GitCompareArrows, Hotel, LayoutDashboard, LifeBuoy, MapPin, Menu, MessageCircle, MoreHorizontal, Plane, Plus, RefreshCw, Search, Send, Settings2, ShieldCheck, Sparkles, Target, TicketCheck, Utensils, Users, X, Zap } from "lucide-react";
 
 type Section = "Dashboard" | "Trips" | "Flights" | "Hotels" | "Transport" | "Restaurants" | "AI Copilot" | "Journey Intelligence" | "Weather" | "Expenses" | "Notifications" | "Travel Requirements" | "Profile";
@@ -173,7 +174,7 @@ function AICopilot({ trip, preferences, journeyAlert, go, notify }: any) {
 
 function Copilot({ message, ask, question, setQuestion }: any) { return <section className="copilot-card card"><div className="copilot-head"><div className="copilot-orb"><Sparkles size={18} /></div><div><h3>TripMate copilot</h3><span>Knows your complete trip context</span></div><span className="online-dot" /></div><div className="copilot-response"><div className="mini-orb"><Sparkles size={12} /></div><p>{message}</p></div><div className="suggested"><span>Try asking</span><button onClick={() => ask("Will I make my meeting if my flight is delayed?")}>Will I make my meeting?</button><button onClick={() => ask("Find a vegetarian restaurant nearby")}>Find dinner nearby</button><button onClick={() => ask("How much am I spending?")}>How much am I spending?</button></div><div className="copilot-input"><input value={question} onChange={(e) => setQuestion(e.target.value)} onKeyDown={(e) => e.key === "Enter" && ask()} placeholder="Ask about your trip..." /><button onClick={() => ask()} aria-label="Send question"><Send size={15} /></button></div></section>; }
 
-const fallbackAirports = [{ code: "BLR", name: "Bengaluru" }, { code: "BOM", name: "Mumbai" }, { code: "DEL", name: "Delhi" }, { code: "HYD", name: "Hyderabad" }];
+const fallbackAirports = indianAirports.map((airport) => ({ code: airport.iataCode, name: airport.city, airportName: airport.airportName, state: airport.state }));
 
 const demoDate = (days: number) => { const date = new Date(); date.setDate(date.getDate() + days); return date.toISOString().slice(0, 10); };
 
@@ -207,7 +208,7 @@ function FlightsSection({ trip, setBooked, go, preferences, notify }: any) {
     setSelected(null);
     const response = await searchFlights({ ...form, departureDate });
     setResults(response.results);
-    if (response.fallback) setMessage("Flight provider temporarily unavailable. Showing demo results.");
+    if (response.fallback) setMessage("Showing shared Demo Provider flight options for this route.");
     setSearching(false);
   };
 
@@ -220,8 +221,8 @@ function FlightsSection({ trip, setBooked, go, preferences, notify }: any) {
   return <>
     <section className="section-page-header"><div><p className="eyebrow">FLIGHT SEARCH · PERSONALIZED</p><h1>Find the right flight</h1><p>Compare provider-backed offers with a reliable demo fallback for every presentation.</p></div><span className="source-label">Traveler preferences applied</span></section>
     <section className="search-panel card" aria-label="Flight search form">
-      <div><Plane size={16} /><label>From<select value={form.origin} onChange={(event) => updateAirport("origin", event.target.value)}>{fallbackAirports.map((airport) => <option key={airport.code} value={airport.code}>{airport.code} · {airport.name}</option>)}</select></label></div>
-      <div><ArrowRight size={16} /><label>To<select value={form.destination} onChange={(event) => updateAirport("destination", event.target.value)}>{fallbackAirports.map((airport) => <option key={airport.code} value={airport.code}>{airport.code} · {airport.name}</option>)}</select></label></div>
+      <div><Plane size={16} /><label>From<select value={form.origin} onChange={(event) => updateAirport("origin", event.target.value)}>{fallbackAirports.map((airport) => <option key={airport.code} value={airport.code}>{airport.code} · {airport.name} · {airport.airportName}</option>)}</select></label></div>
+      <div><ArrowRight size={16} /><label>To<select value={form.destination} onChange={(event) => updateAirport("destination", event.target.value)}>{fallbackAirports.map((airport) => <option key={airport.code} value={airport.code}>{airport.code} · {airport.name} · {airport.airportName}</option>)}</select></label></div>
       <div><CalendarDays size={16} /><label>Dates<input type="date" value={form.departureDate} min={demoDate(1)} onChange={(event) => setForm((current) => ({ ...current, departureDate: event.target.value }))} /><small>Return {form.returnDate}</small></label></div>
       <div><Users size={16} /><label>Travelers<select value={form.travelers} onChange={(event) => setForm((current) => ({ ...current, travelers: Number(event.target.value) }))}><option value={1}>1 traveler</option><option value={2}>2 travelers</option><option value={3}>3 travelers</option><option value={4}>4 travelers</option></select></label></div>
       <button className="demo-button" onClick={runSearch} disabled={searching}>{searching ? "Searching…" : "Search Flights"}</button>
