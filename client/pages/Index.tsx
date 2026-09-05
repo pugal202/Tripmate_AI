@@ -5,7 +5,30 @@ import { searchFlights, type FlightSearchForm, type FlightSearchResult } from "@
 import { calculateJourneyImpact, recoveryOptions as journeyRecoveryOptions } from "@/lib/journey-intelligence";
 import { useTripContext, type AutoRebookPreferences, type TripContext as SharedTripContext, demoHotels as sharedHotels, demoRestaurants as sharedRestaurants, demoExpenses as sharedExpenses } from "@/lib/trip-context";
 import { indianAirports } from "@/data/airports";
-import { Activity, AlertTriangle, ArrowRight, Bell, BrainCircuit, CalendarDays, Car, Check, CheckCircle2, ChevronDown, CircleHelp, Clock3, CloudSun, CreditCard, FileText, GitCompareArrows, Hotel, LayoutDashboard, LifeBuoy, MapPin, Menu, MessageCircle, MoreHorizontal, Plane, Plus, RefreshCw, Search, Send, Settings2, ShieldCheck, Sparkles, Target, TicketCheck, Utensils, Users, X, Zap } from "lucide-react";
+import { Activity, AlertTriangle, ArrowRight, Bell, BrainCircuit, CalendarDays, Car, Check, CheckCircle2, ChevronDown, CircleHelp, Clock3, CloudSun, CreditCard, FileText, GitCompareArrows, Hotel, LayoutDashboard, LifeBuoy, LogOut, MapPin, Menu, MessageCircle, MoreHorizontal, Plane, Plus, RefreshCw, Search, Send, Settings2, ShieldCheck, Sparkles, Target, TicketCheck, Utensils, Users, X, Zap } from "lucide-react";
+
+function getCurrentUserName() {
+  try {
+    const auth = JSON.parse(
+      window.localStorage.getItem("tripmate-auth") || "{}",
+    );
+
+    return auth.name || "Traveler";
+  } catch {
+    return "Traveler";
+  }
+}
+function getCurrentUserInitials() {
+  const name = getCurrentUserName();
+
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .map((part) => part.charAt(0))
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
 
 type Section = "Dashboard" | "Trips" | "Flights" | "Hotels" | "Transport" | "Restaurants" | "AI Copilot" | "Journey Intelligence" | "Weather" | "Expenses" | "Notifications" | "Travel Requirements" | "Profile";
 type DemoState = "on-track" | "disruption" | "confirmed";
@@ -54,8 +77,10 @@ export default function Index({ initialSection = "Dashboard" }: { initialSection
   const ask = (text = question) => { if (!text.trim()) return; const q = text.toLowerCase(); const activeCity = trip.destination.city; setCopilotMessage(q.includes("spend") ? "Your current India trip estimate is ₹23,700: flights ₹12,500, hotel ₹8,500, transport ₹1,200 and dining ₹1,500, within your ₹80,000 budget." : q.includes("restaurant") || q.includes("food") ? "Delhi House is 0.6 km from your hotel, has a 4.8 rating, and matches your vegetarian preference. I can reserve it for 20:00." : q.includes("meeting") || q.includes("miss") ? state === "on-track" ? "You’re scheduled to arrive 2h 15m before the meeting. I’ll alert you if that changes." : "Not with AI 618. You’ll arrive 30 minutes early, with your hotel and transfer still aligned." : `Your active destination is ${activeCity}. I’ll use its live weather, places, hotel coordinates and meeting context for the next recommendation.`); setQuestion(""); };
 
   return <div className="app-shell">
-    <aside className={`sidebar ${mobileNav ? "open" : ""}`}><div className="brand"><span className="brand-mark"><Plane size={16} /></span><span>tripmate<span className="brand-ai">AI</span></span></div><div className="workspace-label">WORKSPACE <ChevronDown size={13} /></div><div className="workspace"><span className="workspace-icon">P</span><span><strong>Pugal’s workspace</strong><small>Personal travel</small></span><ChevronDown size={14} /></div><nav className="main-nav">{navGroups.map((group) => <div key={group.label}><span className="nav-label">{group.label}</span>{group.items.map(({ label, icon: Icon, count }) => <button key={label} onClick={() => go(label)} className={`nav-item ${section === label || (section === "Dashboard" && label === "Dashboard") ? "active" : ""}`}><Icon size={17} /><span>{label}</span>{count && <em>{count}</em>}</button>)}</div>)}</nav><div className="sidebar-bottom"><div className="help-card"><div className="help-icon"><LifeBuoy size={16} /></div><div><strong>Need a hand?</strong><p>Our travel desk is online</p></div><ArrowRight size={14} /></div><div className="profile"><div className="avatar">PS</div><div><strong>Pugal S</strong><small>Traveler · Air India Gold</small></div><More /></div></div></aside>{mobileNav && <button className="nav-overlay" onClick={() => setMobileNav(false)} aria-label="Close navigation" />}
-    <main className="main-content"><header className="topbar"><button className="mobile-menu" onClick={() => setMobileNav(true)}><Menu size={20} /></button><div className="breadcrumb"><span>Workspace</span><ArrowRight size={13} /><strong>{section}</strong></div><div className="top-actions"><button className="icon-button"><Search size={18} /></button><div className="notification-wrap"><button className="icon-button" onClick={() => setNotifications(!notifications)}><Bell size={18} /><i /></button>{notifications && <div className="notification-popover"><strong>Notifications <span className="notification-count">3 new</span></strong><p>AI 482 status is being monitored</p><p>Hotel check-in is confirmed</p><p>TripMate found a better alternative</p></div>}</div><button className="top-avatar" onClick={() => go("Profile")}>PS</button></div></header><div className="page-wrap">{section === "Journey Intelligence" ? <JourneyIntelligence trip={trip} preferences={preferences} notify={notify} onRiskDetected={() => setJourneyAlert(true)} /> : section === "Dashboard" ? <Dashboard notify={notify} trip={trip} destinationQuery={destinationQuery} setDestinationQuery={setDestinationQuery} destinationResults={destinationResults} destinationSearching={destinationSearching} searchDestinations={searchDestinations} selectDestination={selectDestination} state={state} trigger={triggerDisruption} accept={acceptRecovery} rebookStatus={rebookStatus} alternatives={alternatives} preferences={preferences} copilotMessage={copilotMessage} ask={ask} question={question} setQuestion={setQuestion} booked={booked} go={go} /> : section === "AI Copilot" ? <AICopilot trip={trip} preferences={preferences} journeyAlert={journeyAlert} go={go} notify={notify} /> : <WorkspaceSection section={section} trip={trip} booked={booked} setBooked={setBooked} notify={notify} go={go} preferences={preferences} savePreferences={savePreferences} journeyAlert={journeyAlert} />}{toast && <div className="toast"><Check size={15} /> {toast}</div>}<footer><span>TripMate AI <b>·</b> Your intelligent co-pilot for every part of your journey.</span><span><CircleHelp size={14} /> Help center <span className="divider" /> Last synced just now</span></footer></div></main>
+    <aside className={`sidebar ${mobileNav ? "open" : ""}`}><div className="brand"><span className="brand-mark"><Plane size={16} /></span><span>tripmate<span className="brand-ai">AI</span></span></div><div className="workspace-label">WORKSPACE <ChevronDown size={13} /></div><div className="workspace"><span className="workspace-icon">
+  {getCurrentUserInitials().charAt(0)}
+</span><span><strong>{getCurrentUserName()}'s workspace</strong><small>Personal travel</small></span><ChevronDown size={14} /></div><nav className="main-nav">{navGroups.map((group) => <div key={group.label}><span className="nav-label">{group.label}</span>{group.items.map(({ label, icon: Icon, count }) => <button key={label} onClick={() => go(label)} className={`nav-item ${section === label || (section === "Dashboard" && label === "Dashboard") ? "active" : ""}`}><Icon size={17} /><span>{label}</span>{count && <em>{count}</em>}</button>)}</div>)}</nav><div className="sidebar-bottom"><div className="help-card"><div className="help-icon"><LifeBuoy size={16} /></div><div><strong>Need a hand?</strong><p>Our travel desk is online</p></div><ArrowRight size={14} /></div><div className="profile"><div className="avatar">{getCurrentUserInitials()}</div><div><strong>{getCurrentUserName()}</strong><small>Traveler · Air India Gold</small></div><More /></div></div></aside>{mobileNav && <button className="nav-overlay" onClick={() => setMobileNav(false)} aria-label="Close navigation" />}
+    <main className="main-content"><header className="topbar"><button className="mobile-menu" onClick={() => setMobileNav(true)}><Menu size={20} /></button><div className="breadcrumb"><span>Workspace</span><ArrowRight size={13} /><strong>{section}</strong></div><div className="top-actions"><button className="icon-button"><Search size={18} /></button><div className="notification-wrap"><button className="icon-button" onClick={() => setNotifications(!notifications)}><Bell size={18} /><i /></button>{notifications && <div className="notification-popover"><strong>Notifications <span className="notification-count">3 new</span></strong><p>AI 482 status is being monitored</p><p>Hotel check-in is confirmed</p><p>TripMate found a better alternative</p></div>}</div><button className="top-avatar" onClick={() => go("Profile")}>{getCurrentUserInitials()}</button></div></header><div className="page-wrap">{section === "Journey Intelligence" ? <JourneyIntelligence trip={trip} preferences={preferences} notify={notify} onRiskDetected={() => setJourneyAlert(true)} /> : section === "Dashboard" ? <Dashboard notify={notify} trip={trip} destinationQuery={destinationQuery} setDestinationQuery={setDestinationQuery} destinationResults={destinationResults} destinationSearching={destinationSearching} searchDestinations={searchDestinations} selectDestination={selectDestination} state={state} trigger={triggerDisruption} accept={acceptRecovery} rebookStatus={rebookStatus} alternatives={alternatives} preferences={preferences} copilotMessage={copilotMessage} ask={ask} question={question} setQuestion={setQuestion} booked={booked} go={go} /> : section === "AI Copilot" ? <AICopilot trip={trip} preferences={preferences} journeyAlert={journeyAlert} go={go} notify={notify} /> : <WorkspaceSection section={section} trip={trip} booked={booked} setBooked={setBooked} notify={notify} go={go} preferences={preferences} savePreferences={savePreferences} journeyAlert={journeyAlert} />}{toast && <div className="toast"><Check size={15} /> {toast}</div>}<footer><span>TripMate AI <b>·</b> Your intelligent co-pilot for every part of your journey.</span><span><CircleHelp size={14} /> Help center <span className="divider" /> Last synced just now</span></footer></div></main>
   </div>;
 }
 
@@ -114,7 +139,7 @@ function JourneyIntelligence({ trip, preferences, notify, onRiskDetected }: { tr
 }
 
 function DestinationPicker({ trip, query, setQuery, results, searching, onSearch, onSelect }: any) { return <section className="destination-picker card"><div className="destination-current"><div className="destination-pin"><MapPin size={18} /></div><div><span className="eyebrow">ACTIVE DESTINATION</span><strong>{trip.destination.city}, {trip.destination.country}</strong><small>{trip.destination.timezone} · {trip.destination.countryCode}</small></div></div><div className="destination-search"><Search size={15} /><input value={query} onChange={(event) => setQuery(event.target.value)} onKeyDown={(event) => event.key === "Enter" && onSearch()} placeholder="Search a city, country, airport or business location" /><button onClick={onSearch}>{searching ? "Searching…" : "Change destination"}</button>{results.length > 0 && <div className="destination-results">{results.map((result: any) => <button key={result.id} onClick={() => onSelect(result)}><MapPin size={14} /><span><strong>{result.city}</strong><small>{result.country} · {result.countryCode}</small></span><ArrowRight size={14} /></button>)}</div>}</div></section>; }
-function Dashboard({ notify, trip, destinationQuery, setDestinationQuery, destinationResults, destinationSearching, searchDestinations, selectDestination, state, trigger, accept, rebookStatus, alternatives, preferences, copilotMessage, ask, question, setQuestion, booked, go }: any) { return <><section className="welcome-row"><div><p className="eyebrow">THURSDAY, 24 OCTOBER 2024 <span className="live-indicator"><i /> LIVE MONITORING</span></p><h1>Good morning, Pugal <span>👋</span></h1><p className="welcome-copy">Here’s everything you need for your upcoming journey.</p></div><button className="demo-button" onClick={state === "on-track" ? trigger : () => window.location.reload()}><Zap size={16} fill="currentColor" /> {state === "on-track" ? "Flight Disruption Demo" : "Reset test event"}</button></section><DestinationPicker trip={trip} query={destinationQuery} setQuery={setDestinationQuery} results={destinationResults} searching={destinationSearching} onSearch={searchDestinations} onSelect={selectDestination} />{state === "disruption" && <div className="incident-banner"><div className="incident-symbol"><Activity size={19} /></div><div className="incident-copy"><div><strong>Travel impact detected</strong><span>AI 482 was cancelled in the labeled demo event · connection, hotel and meeting at risk</span></div><span className="impact-score">IMPACT <b>78</b> / 100</span></div><button onClick={() => document.getElementById("recovery")?.scrollIntoView({ behavior: "smooth" })}>Review recovery <ArrowRight size={15} /></button></div>}{state === "confirmed" && <div className="confirmed-banner"><div className="confirmed-icon"><Check size={19} /></div><div><strong>Recovery workflow complete</strong><span>The selected offer was revalidated, but no provider booking confirmation was received.</span></div></div>}{state === "disruption" && <DisruptionPanel status={rebookStatus} alternatives={alternatives} preferences={preferences} accept={accept} />}<section className="hero-grid"><div className="trip-card card"><div className="card-top"><div><p className="eyebrow">UPCOMING BUSINESS TRIP · AUG 20 – AUG 26</p><h2>{trip.origin.city} <span>→</span> {trip.destination.city}</h2><p className="muted"><CalendarDays size={11} /> 6 days <span className="divider" /> 5 services connected <span className="divider" /> ₹23,700 estimated</p></div><Status state={state} /></div><div className="route-line"><div className="route-node active"><span>{trip.airports.origin}</span><small>{trip.origin.city}</small></div><div className={`route-segment ${state !== "on-track" ? "warning" : ""}`}><div className="route-flight"><Plane size={14} /> {state === "confirmed" ? "AI 618" : "AI 482"}</div><span>{state === "on-track" ? "1h 50m" : "Updated"}</span></div><div className="route-node"><span>{trip.airports.connection}</span><small>{trip.journey.stops[0]}</small></div><div className="route-segment"><div className="route-flight"><Plane size={14} /> AI 618</div><span>2h 10m</span></div><div className="route-node final"><span>{trip.airports.destination}</span><small>{trip.destination.city}</small></div></div><div className="trip-stats"><div><span>NEXT FLIGHT</span><strong>{state === "on-track" ? "AI 482" : "AI 618 · Updated"}</strong><small>{state === "on-track" ? "20 Oct · 08:40 IST" : "New departure 12:50 IST"}</small></div><div><span>HOTEL</span><strong>Andaz Delhi Aerocity</strong><small>5 nights · Confirmed</small></div><div><span>MEETING</span><strong>Fri, 09:00</strong><small>High priority · HQ</small></div></div></div><div className="status-card card"><div className="status-heading"><div className="ai-spark"><Sparkles size={17} /></div><div><h3>AI travel status</h3><span>Trip context engine active</span></div><span className="online-dot" /></div>{state === "on-track" ? <><div className="status-message"><ShieldCheck size={18} /><p><strong>Everything is on schedule.</strong><br />I’m monitoring flights, hotel, transport, dining and your meeting.</p></div><div className="monitor-list"><span><Plane size={14} /> Flights <b>2</b></span><span><Hotel size={14} /> Hotel <b>1</b></span><span><Utensils size={14} /> Dining <b>1</b></span></div></> : <><div className="status-message warning-message"><Activity size={18} /><p><strong>Action needed.</strong><br />I found a low-risk recovery plan for you.</p></div><button className="inline-link" onClick={() => document.getElementById("recovery")?.scrollIntoView({ behavior: "smooth" })}>View recommendation <ArrowRight size={14} /></button></>}</div></section><section className="service-strip"><Service icon={<Plane />} label="Flight" value={booked.includes("AI 618") ? "AI 618 · Updated" : "AI 482 · Confirmed"} tone="blue" onClick={() => go("Flights")} /><Service icon={<Hotel />} label="Hotel" value="Hilton Mumbai · 5 nights" tone="violet" onClick={() => go("Hotels")} /><Service icon={<Car />} label="Transport" value="Airport transfer scheduled" tone="orange" onClick={() => go("Transport")} /><Service icon={<Utensils />} label="Dining" value="Dinner · 20:00" tone="teal" onClick={() => go("Restaurants")} /><Service icon={<Users />} label="Meeting" value="Sarah Mitchell · 09:00" tone="pink" onClick={() => notify("Meeting details · Sarah Mitchell · VP Enterprise Partnerships · Aerocity, New Delhi · 09:00–10:00 IST")} /></section><JourneySegments segments={trip.segments} /><section className="content-grid"><div className="left-column"><div className="section-heading"><div><p className="eyebrow">YOUR JOURNEY</p><h2>Trip timeline</h2></div><button className="text-button" onClick={() => go("Trips")}>View full itinerary <ArrowRight size={14} /></button></div><div className="timeline card">{["Flight to Mumbai|AI 482 · {trip.origin.city} → {trip.journey.stops[0]}|08:40|20 Oct · Terminal 2 · Confirmed", "Connecting flight|AI 618 · Mumbai → Delhi|20:00|20 Oct · Terminal 3 · Confirmed", "Hotel check-in|Andaz Delhi Aerocity|22:50|20 Oct · Reservation ADA-2841", "Business meeting|Sarah Mitchell · Aerocity, New Delhi|09:00|21 Oct · High priority"].map((item, index) => { const [label, detail, time, sub] = item.split("|"); const icons: any[] = [Plane, Plane, Hotel, Users]; const Icon = icons[index]; return <div className="timeline-item" key={label}><div className={`timeline-icon ${index === 2 ? "violet" : index === 3 ? "teal" : "blue"}`}><Icon size={16} /></div><div className="timeline-body"><div><strong>{label}</strong><p>{detail}</p><small>{sub}</small></div><div className="timeline-time"><strong>{time}</strong></div></div></div>; })}</div>{false && state !== "on-track" && <div id="recovery" className="recovery-card card"><div className="recovery-header"><div><span className="recommend-label"><Sparkles size={13} /> TRIPMATE RECOMMENDS</span><h2>Switch to AI 618</h2><p>Safest route for your priorities</p></div><span className="low-risk">LOW RISK</span></div><div className="reasons"><span><Check size={14} /> Arrives before your meeting</span><span><Check size={14} /> Matches Air India preference</span><span><Check size={14} /> Preserves hotel reservation</span><span><Check size={14} /> Lowest disruption risk</span></div><div className="recovery-footer"><div><small>WHY THIS OPTION?</small><p>TripMate prioritized your high-importance meeting and ₹35,000 travel budget.</p></div><button className="accept-button" onClick={accept}><Check size={16} /> Accept recovery plan</button></div></div>}</div><aside className="right-column"><Copilot message={copilotMessage} ask={ask} question={question} setQuestion={setQuestion} /></aside></section></>; }
+function Dashboard({ notify, trip, destinationQuery, setDestinationQuery, destinationResults, destinationSearching, searchDestinations, selectDestination, state, trigger, accept, rebookStatus, alternatives, preferences, copilotMessage, ask, question, setQuestion, booked, go }: any) { return <><section className="welcome-row"><div><p className="eyebrow">THURSDAY, 24 OCTOBER 2024 <span className="live-indicator"><i /> LIVE MONITORING</span></p><h1>Good morning, {getCurrentUserName()} <span>👋</span></h1><p className="welcome-copy">Here’s everything you need for your upcoming journey.</p></div><button className="demo-button" onClick={state === "on-track" ? trigger : () => window.location.reload()}><Zap size={16} fill="currentColor" /> {state === "on-track" ? "Flight Disruption Demo" : "Reset test event"}</button></section><DestinationPicker trip={trip} query={destinationQuery} setQuery={setDestinationQuery} results={destinationResults} searching={destinationSearching} onSearch={searchDestinations} onSelect={selectDestination} />{state === "disruption" && <div className="incident-banner"><div className="incident-symbol"><Activity size={19} /></div><div className="incident-copy"><div><strong>Travel impact detected</strong><span>AI 482 was cancelled in the labeled demo event · connection, hotel and meeting at risk</span></div><span className="impact-score">IMPACT <b>78</b> / 100</span></div><button onClick={() => document.getElementById("recovery")?.scrollIntoView({ behavior: "smooth" })}>Review recovery <ArrowRight size={15} /></button></div>}{state === "confirmed" && <div className="confirmed-banner"><div className="confirmed-icon"><Check size={19} /></div><div><strong>Recovery workflow complete</strong><span>The selected offer was revalidated, but no provider booking confirmation was received.</span></div></div>}{state === "disruption" && <DisruptionPanel status={rebookStatus} alternatives={alternatives} preferences={preferences} accept={accept} />}<section className="hero-grid"><div className="trip-card card"><div className="card-top"><div><p className="eyebrow">UPCOMING BUSINESS TRIP · AUG 20 – AUG 26</p><h2>{trip.origin.city} <span>→</span> {trip.destination.city}</h2><p className="muted"><CalendarDays size={11} /> 6 days <span className="divider" /> 5 services connected <span className="divider" /> ₹23,700 estimated</p></div><Status state={state} /></div><div className="route-line"><div className="route-node active"><span>{trip.airports.origin}</span><small>{trip.origin.city}</small></div><div className={`route-segment ${state !== "on-track" ? "warning" : ""}`}><div className="route-flight"><Plane size={14} /> {state === "confirmed" ? "AI 618" : "AI 482"}</div><span>{state === "on-track" ? "1h 50m" : "Updated"}</span></div><div className="route-node"><span>{trip.airports.connection}</span><small>{trip.journey.stops[0]}</small></div><div className="route-segment"><div className="route-flight"><Plane size={14} /> AI 618</div><span>2h 10m</span></div><div className="route-node final"><span>{trip.airports.destination}</span><small>{trip.destination.city}</small></div></div><div className="trip-stats"><div><span>NEXT FLIGHT</span><strong>{state === "on-track" ? "AI 482" : "AI 618 · Updated"}</strong><small>{state === "on-track" ? "20 Oct · 08:40 IST" : "New departure 12:50 IST"}</small></div><div><span>HOTEL</span><strong>Andaz Delhi Aerocity</strong><small>5 nights · Confirmed</small></div><div><span>MEETING</span><strong>Fri, 09:00</strong><small>High priority · HQ</small></div></div></div><div className="status-card card"><div className="status-heading"><div className="ai-spark"><Sparkles size={17} /></div><div><h3>AI travel status</h3><span>Trip context engine active</span></div><span className="online-dot" /></div>{state === "on-track" ? <><div className="status-message"><ShieldCheck size={18} /><p><strong>Everything is on schedule.</strong><br />I’m monitoring flights, hotel, transport, dining and your meeting.</p></div><div className="monitor-list"><span><Plane size={14} /> Flights <b>2</b></span><span><Hotel size={14} /> Hotel <b>1</b></span><span><Utensils size={14} /> Dining <b>1</b></span></div></> : <><div className="status-message warning-message"><Activity size={18} /><p><strong>Action needed.</strong><br />I found a low-risk recovery plan for you.</p></div><button className="inline-link" onClick={() => document.getElementById("recovery")?.scrollIntoView({ behavior: "smooth" })}>View recommendation <ArrowRight size={14} /></button></>}</div></section><section className="service-strip"><Service icon={<Plane />} label="Flight" value={booked.includes("AI 618") ? "AI 618 · Updated" : "AI 482 · Confirmed"} tone="blue" onClick={() => go("Flights")} /><Service icon={<Hotel />} label="Hotel" value="Hilton Mumbai · 5 nights" tone="violet" onClick={() => go("Hotels")} /><Service icon={<Car />} label="Transport" value="Airport transfer scheduled" tone="orange" onClick={() => go("Transport")} /><Service icon={<Utensils />} label="Dining" value="Dinner · 20:00" tone="teal" onClick={() => go("Restaurants")} /><Service icon={<Users />} label="Meeting" value="Sarah Mitchell · 09:00" tone="pink" onClick={() => notify("Meeting details · Sarah Mitchell · VP Enterprise Partnerships · Aerocity, New Delhi · 09:00–10:00 IST")} /></section><JourneySegments segments={trip.segments} /><section className="content-grid"><div className="left-column"><div className="section-heading"><div><p className="eyebrow">YOUR JOURNEY</p><h2>Trip timeline</h2></div><button className="text-button" onClick={() => go("Trips")}>View full itinerary <ArrowRight size={14} /></button></div><div className="timeline card">{["Flight to Mumbai|AI 482 · {trip.origin.city} → {trip.journey.stops[0]}|08:40|20 Oct · Terminal 2 · Confirmed", "Connecting flight|AI 618 · Mumbai → Delhi|20:00|20 Oct · Terminal 3 · Confirmed", "Hotel check-in|Andaz Delhi Aerocity|22:50|20 Oct · Reservation ADA-2841", "Business meeting|Sarah Mitchell · Aerocity, New Delhi|09:00|21 Oct · High priority"].map((item, index) => { const [label, detail, time, sub] = item.split("|"); const icons: any[] = [Plane, Plane, Hotel, Users]; const Icon = icons[index]; return <div className="timeline-item" key={label}><div className={`timeline-icon ${index === 2 ? "violet" : index === 3 ? "teal" : "blue"}`}><Icon size={16} /></div><div className="timeline-body"><div><strong>{label}</strong><p>{detail}</p><small>{sub}</small></div><div className="timeline-time"><strong>{time}</strong></div></div></div>; })}</div>{false && state !== "on-track" && <div id="recovery" className="recovery-card card"><div className="recovery-header"><div><span className="recommend-label"><Sparkles size={13} /> TRIPMATE RECOMMENDS</span><h2>Switch to AI 618</h2><p>Safest route for your priorities</p></div><span className="low-risk">LOW RISK</span></div><div className="reasons"><span><Check size={14} /> Arrives before your meeting</span><span><Check size={14} /> Matches Air India preference</span><span><Check size={14} /> Preserves hotel reservation</span><span><Check size={14} /> Lowest disruption risk</span></div><div className="recovery-footer"><div><small>WHY THIS OPTION?</small><p>TripMate prioritized your high-importance meeting and ₹35,000 travel budget.</p></div><button className="accept-button" onClick={accept}><Check size={16} /> Accept recovery plan</button></div></div>}</div><aside className="right-column"><Copilot message={copilotMessage} ask={ask} question={question} setQuestion={setQuestion} /></aside></section></>; }
 
 function JourneySegments({ segments }: { segments: JourneySegment[] }) { const icons: Record<string, any> = { flight: Plane, train: TrainIcon, bus: BusIcon, taxi: Car, rental_car: Car, metro: TrainIcon, tram: TrainIcon, walking: FootprintsIcon, bike: BikeIcon, other: MapPin }; return <div className="journey-segments card"><div className="section-heading"><div><p className="eyebrow">CONNECTED JOURNEY</p><h2>One itinerary, every mode</h2></div><span className="source-label">Provider status where available</span></div><div className="journey-segment-list">{segments.map((segment, index) => { const Icon = icons[segment.type] ?? MapPin; return <div className="journey-segment" key={`${segment.type}-${index}`}><div className={`journey-mode ${segment.type}`}><Icon size={16} /></div><div className="journey-segment-main"><strong>{segment.serviceNumber || segment.type.replace("_", " ")}</strong><span>{segment.origin} → {segment.destination}</span><small>{segment.provider || "Provider unavailable"} · {segment.status === "unavailable" ? "Live status unavailable" : segment.status.replace("_", " ")}</small></div><div className="journey-segment-time"><strong>{segment.departure || "—"}</strong><span>{segment.arrival || "—"}</span></div></div>; })}</div></div>; }
 function TrainIcon({ size }: { size?: number }) { return <span style={{ fontSize: size ? `${size}px` : "16px" }}>🚆</span>; }
@@ -245,4 +270,255 @@ function Expenses() { return <><section className="section-page-header"><div><p 
 function Notifications({ journeyAlert }: { journeyAlert: boolean }) { return <><section className="section-page-header"><div><p className="eyebrow">TRAVEL GUARDIAN</p><h1>Notifications</h1><p>Contextual updates from every part of your journey.</p></div><button className="text-button">Mark all as read <Check size={14} /></button></section><div className="notification-list card">{[...(journeyAlert ? [["Journey risk detected", "Your Mumbai connection is at risk. TripMate has analyzed alternatives and prepared a personalized recovery recommendation.", AlertTriangle, "Just now"]] : []), ["Flight confirmed", "AI 482 is confirmed for 20 Oct at 06:30 IST.", Plane, "2 min ago"], ["Hotel booking confirmed", "Hilton Mumbai is reserved for 5 nights.", Hotel, "1 hour ago"], ["Transfer scheduled", "Airport Cab meets you at arrivals at 22:30 IST.", Car, "Yesterday"], ["Meeting reminder", "Enterprise Client Meeting begins tomorrow at 09:00.", Users, "Yesterday"]].map(([title, detail, Icon, time]: any) => <div className="notification-row" key={title}><div className="activity-icon teal"><Icon size={15} /></div><div><strong>{title}</strong><p>{detail}</p></div><time>{time}</time><button><More /></button></div>)}</div></>; }
 function Weather({ city }: { city: string }) { const [data, setData] = useState<any>(null); const [error, setError] = useState(""); const [loading, setLoading] = useState(true); useEffect(() => { fetch(`/api/weather?city=${encodeURIComponent(city)}`).then(async (response) => { const payload = await response.json(); if (!response.ok) throw new Error(payload.error); return payload; }).then(setData).catch((reason) => setError(reason.message)).finally(() => setLoading(false)); }, [city]); return <><section className="section-page-header"><div><p className="eyebrow">LIVE DESTINATION WEATHER</p><h1>Weather in {city}</h1><p>Real conditions from Open-Meteo · updates when you refresh.</p></div><button className="demo-button" onClick={() => window.location.reload()}><CloudSun size={16} /> Refresh weather</button></section>{loading && <div className="card live-state"><CloudSun size={19} /> Checking live weather...</div>}{error && <div className="card live-state error-state"><X size={17} /> {error}</div>}{data && <><div className="weather-grid"><div className="card weather-current"><div className="weather-icon"><CloudSun size={35} /></div><div><p className="eyebrow">{data.location.name.toUpperCase()} · LIVE</p><h2>{Math.round(data.current.temperature)}°C</h2><p>Feels like {Math.round(data.current.feelsLike)}°C · {data.current.humidity}% humidity</p></div><span>Code {data.current.weatherCode}</span></div><div className="card weather-stat"><span>WIND</span><strong>{Math.round(data.current.windSpeed)} km/h</strong><small>Current wind speed</small></div><div className="card weather-stat"><span>UPDATED</span><strong>{data.current.updatedAt.slice(11, 16)}</strong><small>Local destination time</small></div></div><div className="card forecast-panel"><div className="section-heading"><div><p className="eyebrow">5-DAY OUTLOOK</p><h2>Plan around the weather</h2></div><span className="source-label">Source: Open-Meteo</span></div><div className="forecast-row">{data.daily.map((day: any) => <div key={day.date}><strong>{new Date(day.date).toLocaleDateString(undefined, { weekday: "short" })}</strong><CloudSun size={21} /><b>{Math.round(day.high)}° <small>{Math.round(day.low)}°</small></b><span>{day.date}</span></div>)}</div></div></>}</>; }
 function TravelRequirements({ destination }: { destination: TripContext["destination"] }) { return <><section className="section-page-header"><div><p className="eyebrow">OFFICIAL TRAVEL INFORMATION</p><h1>Travel requirements for {destination.city}</h1><p>Review India travel documents and business-trip requirements. TripMate does not invent policy guidance.</p></div><button className="demo-button" onClick={() => window.open("https://www.iatatravelcentre.com/", "_blank", "noopener,noreferrer")}><ArrowRight size={16} /> Open official checker</button></section><div className="requirements-grid"><div className="card requirement-card"><div className="requirement-icon"><FileText size={18} /></div><h3>{destination.countryCode === "IN" ? "India" : "Your origin"} → {destination.country}</h3><p>Requirements can change based on nationality, passport, purpose and dates. Use the official IATA Travel Centre for the authoritative result.</p><span>Source: IATA Travel Centre · External verification required</span><button onClick={() => window.open("https://www.iatatravelcentre.com/", "_blank", "noopener,noreferrer")}>Verify requirements <ArrowRight size={14} /></button></div><div className="card requirement-card"><div className="requirement-icon"><ShieldCheck size={18} /></div><h3>Document checklist</h3>{["Passport valid for the required period", "Visa / entry authorization if required", "Flight and accommodation details", "Travel insurance and company policy"].map((item) => <div className="check-row" key={item}><Check size={14} /> {item}</div>)}</div></div></>; }
-function Profile({ preferences, savePreferences }: { preferences: AutoRebookPreferences; savePreferences: (next: AutoRebookPreferences) => void }) { const update = (key: keyof AutoRebookPreferences, value: string | number | boolean) => savePreferences({ ...preferences, [key]: value }); return <><section className="section-page-header"><div><p className="eyebrow">TRAVELER PROFILE</p><h1>Personalize your journey</h1><p>These rules control how TripMate handles a cancelled or significantly disrupted flight.</p></div><span className={`auto-status ${preferences.enabled ? "enabled" : "disabled"}`}>{preferences.enabled ? "AUTO-REBOOKING ON" : "AUTO-REBOOKING OFF"}</span></section><div className="profile-grid"><div className="card profile-hero"><div className="large-avatar">PS</div><h2>Pugal S</h2><p>Business traveler · Bengaluru</p><span className="profile-badge"><ShieldCheck size={13} /> Air India Gold</span><div className="profile-note"><Sparkles size={14} /> AI will prioritize Critical meetings and your airline preferences.</div></div><div className="card preference-panel auto-panel"><div className="auto-header"><div><h2>Automatic Rebooking</h2><p>Allow TripMate to revalidate eligible alternatives automatically. Provider confirmation is always required.</p></div><button className={`toggle ${preferences.enabled ? "on" : ""}`} onClick={() => update("enabled", !preferences.enabled)} aria-label="Toggle automatic rebooking"><i /></button></div><div className="rule-grid"><label>Maximum additional price<input type="number" min="0" value={preferences.maxAdditionalPrice} onChange={(e) => update("maxAdditionalPrice", Number(e.target.value))} /><small>INR above original fare</small></label><label>Maximum travel time / delay<input type="number" min="0" step=".5" value={preferences.maxTravelTime} onChange={(e) => update("maxTravelTime", Number(e.target.value))} /><small>Additional hours allowed</small></label><label>Preferred airlines<input value={preferences.preferredAirlines} onChange={(e) => update("preferredAirlines", e.target.value)} /><small>Comma-separated airline names</small></label><label>Allowed cabin<select value={preferences.cabin} onChange={(e) => update("cabin", e.target.value)}><option value="ECONOMY">Economy</option><option value="PREMIUM_ECONOMY">Premium Economy</option><option value="BUSINESS">Business</option><option value="FIRST">First</option></select></label><label>Maximum stops<select value={preferences.maxStops} onChange={(e) => update("maxStops", e.target.value)}><option value="0">Non-stop only</option><option value="1">Up to 1 stop</option><option value="2+">2+ stops</option></select></label><label>Preferred departure window<select value={preferences.departureWindow} onChange={(e) => update("departureWindow", e.target.value)}><option>06:00 – 12:00</option><option>12:00 – 18:00</option><option>18:00 – 23:00</option><option>Any time</option></select></label><label>Meeting priority<select value={preferences.meetingPriority} onChange={(e) => update("meetingPriority", e.target.value)}><option>Critical</option><option>High</option><option>Normal</option></select></label><label>Seat preference<select value={preferences.seatPreference} onChange={(e) => update("seatPreference", e.target.value)}><option>Window</option><option>Aisle</option><option>No preference</option></select></label><label>Baggage requirement<select value={preferences.baggage} onChange={(e) => update("baggage", e.target.value)}><option>1 checked bag</option><option>2 checked bags</option><option>Carry-on only</option></select></label><label>Refund / change preference<select value={preferences.refundPreference} onChange={(e) => update("refundPreference", e.target.value)}><option>Refundable / flexible</option><option>Lowest fare</option><option>Any policy</option></select></label></div>{preferences.enabled && <div className="auto-warning"><ShieldCheck size={15} /> Auto-rebooking is limited to these rules. If no offer satisfies them, TripMate will not book or rebook automatically.</div>}</div></div></>; }
+function Profile({
+  preferences,
+  savePreferences,
+}: {
+  preferences: AutoRebookPreferences;
+  savePreferences: (next: AutoRebookPreferences) => void;
+}) {
+  const navigate = useNavigate();
+
+  const logout = () => {
+    window.localStorage.removeItem("tripmate-auth");
+    navigate("/login");
+  };
+
+  const update = (
+    key: keyof AutoRebookPreferences,
+    value: string | number | boolean,
+  ) => {
+    savePreferences({ ...preferences, [key]: value });
+  };
+
+  return (
+    <>
+      <section className="section-page-header">
+        <div>
+          <p className="eyebrow">TRAVELER PROFILE</p>
+          <h1>Personalize your journey</h1>
+          <p>
+            These rules control how TripMate handles a cancelled or
+            significantly disrupted flight.
+          </p>
+        </div>
+
+        <span
+          className={`auto-status ${
+            preferences.enabled ? "enabled" : "disabled"
+          }`}
+        >
+          {preferences.enabled
+            ? "AUTO-REBOOKING ON"
+            : "AUTO-REBOOKING OFF"}
+        </span>
+      </section>
+
+      <div className="profile-grid">
+        <div className="card profile-hero">
+          <div className="large-avatar">PS</div>
+
+          <h2>Pugal S</h2>
+          <p>Business traveler · Bengaluru</p>
+
+          <span className="profile-badge">
+            <ShieldCheck size={13} />
+            Air India Gold
+          </span>
+
+          <div className="profile-note">
+            <Sparkles size={14} />
+            AI will prioritize Critical meetings and your airline preferences.
+          </div>
+
+          <button
+            type="button"
+            className="text-button"
+            onClick={logout}
+          >
+            <LogOut size={15} />
+            Logout
+          </button>
+        </div>
+
+        <div className="card preference-panel auto-panel">
+          <div className="auto-header">
+            <div>
+              <h2>Automatic Rebooking</h2>
+              <p>
+                Allow TripMate to revalidate eligible alternatives
+                automatically. Provider confirmation is always required.
+              </p>
+            </div>
+
+            <button
+              className={`toggle ${preferences.enabled ? "on" : ""}`}
+              onClick={() =>
+                update("enabled", !preferences.enabled)
+              }
+              aria-label="Toggle automatic rebooking"
+            >
+              <i />
+            </button>
+          </div>
+
+          <div className="rule-grid">
+            <label>
+              Maximum additional price
+              <input
+                type="number"
+                min="0"
+                value={preferences.maxAdditionalPrice}
+                onChange={(e) =>
+                  update(
+                    "maxAdditionalPrice",
+                    Number(e.target.value),
+                  )
+                }
+              />
+              <small>INR above original fare</small>
+            </label>
+
+            <label>
+              Maximum travel time / delay
+              <input
+                type="number"
+                min="0"
+                step=".5"
+                value={preferences.maxTravelTime}
+                onChange={(e) =>
+                  update(
+                    "maxTravelTime",
+                    Number(e.target.value),
+                  )
+                }
+              />
+              <small>Additional hours allowed</small>
+            </label>
+
+            <label>
+              Preferred airlines
+              <input
+                value={preferences.preferredAirlines}
+                onChange={(e) =>
+                  update("preferredAirlines", e.target.value)
+                }
+              />
+              <small>Comma-separated airline names</small>
+            </label>
+
+            <label>
+              Allowed cabin
+              <select
+                value={preferences.cabin}
+                onChange={(e) =>
+                  update("cabin", e.target.value)
+                }
+              >
+                <option value="ECONOMY">Economy</option>
+                <option value="PREMIUM_ECONOMY">
+                  Premium Economy
+                </option>
+                <option value="BUSINESS">Business</option>
+                <option value="FIRST">First</option>
+              </select>
+            </label>
+
+            <label>
+              Maximum stops
+              <select
+                value={preferences.maxStops}
+                onChange={(e) =>
+                  update("maxStops", e.target.value)
+                }
+              >
+                <option value="0">Non-stop only</option>
+                <option value="1">Up to 1 stop</option>
+                <option value="2+">2+ stops</option>
+              </select>
+            </label>
+
+            <label>
+              Preferred departure window
+              <select
+                value={preferences.departureWindow}
+                onChange={(e) =>
+                  update("departureWindow", e.target.value)
+                }
+              >
+                <option>06:00 – 12:00</option>
+                <option>12:00 – 18:00</option>
+                <option>18:00 – 23:00</option>
+                <option>Any time</option>
+              </select>
+            </label>
+
+            <label>
+              Meeting priority
+              <select
+                value={preferences.meetingPriority}
+                onChange={(e) =>
+                  update("meetingPriority", e.target.value)
+                }
+              >
+                <option>Critical</option>
+                <option>High</option>
+                <option>Normal</option>
+              </select>
+            </label>
+
+            <label>
+              Seat preference
+              <select
+                value={preferences.seatPreference}
+                onChange={(e) =>
+                  update("seatPreference", e.target.value)
+                }
+              >
+                <option>Window</option>
+                <option>Aisle</option>
+                <option>No preference</option>
+              </select>
+            </label>
+
+            <label>
+              Baggage requirement
+              <select
+                value={preferences.baggage}
+                onChange={(e) =>
+                  update("baggage", e.target.value)
+                }
+              >
+                <option>1 checked bag</option>
+                <option>2 checked bags</option>
+                <option>Carry-on only</option>
+              </select>
+            </label>
+
+            <label>
+              Refund / change preference
+              <select
+                value={preferences.refundPreference}
+                onChange={(e) =>
+                  update("refundPreference", e.target.value)
+                }
+              >
+                <option>Refundable / flexible</option>
+                <option>Lowest fare</option>
+                <option>Any policy</option>
+              </select>
+            </label>
+          </div>
+
+          {preferences.enabled && (
+            <div className="auto-warning">
+              <ShieldCheck size={15} />
+              Auto-rebooking is limited to these rules. If no offer
+              satisfies them, TripMate will not book or rebook automatically.
+            </div>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
