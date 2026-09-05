@@ -37,9 +37,9 @@ function ruleBasedAnswer(message: string, context: Record<string, any>) {
   const query = message.toLowerCase();
   const disrupted = Boolean(context.journeyStatus?.disrupted);
   const flights = context.availableDemoData?.flights ?? [
-    { flightNumber: "DA482", price: "₹42,500", stops: "Non-stop", arrival: "07:40" },
-    { flightNumber: "DA518", price: "₹38,200", stops: "1 stop", arrival: "09:20" },
-    { flightNumber: "DA620", price: "₹31,900", stops: "1 stop", arrival: "12:10" },
+    { flightNumber: "AI 482", price: "₹8,250", stops: "Non-stop", arrival: "10:35" },
+    { flightNumber: "6E 531", price: "₹6,100", stops: "Non-stop", arrival: "10:00" },
+    { flightNumber: "UK 945", price: "₹9,400", stops: "Non-stop", arrival: "13:35" },
   ];
   let answer = "I can explain the current TripMate journey, compare the demo recovery options, or help you review the meeting, hotel and travel policy context.";
 
